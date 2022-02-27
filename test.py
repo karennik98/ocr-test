@@ -4,14 +4,16 @@ from tesserocr import PyTessBaseAPI
 from jiwer import wer
 import xlsxwriter
 
+lang = 'arm'
+
 def write_sheet(result):
-    workbook = xlsxwriter.Workbook('wer.xlsx')
+    workbook = xlsxwriter.Workbook('wer_' + lang + '.xlsx')
     worksheet = workbook.add_worksheet()
 
     row = 0
     col = 0
     for name, score in result:
-        worksheet.write(row, col, name)
+        worksheet.write(row, col, name + '.jpg')
         worksheet.write(row, col + 1, score)
         row += 1
 
@@ -30,7 +32,7 @@ def ocr(images, out_folder):
     ocr_results = list()
     with PyTessBaseAPI() as api:
         for img in images:
-            api.Init("/home/karen/master-ocr/ocr-test/", lang="hye")
+            api.Init("/home/karen/master-ocr/ocr-test/", lang=lang)
             api.SetImageFile(img[1])
             ocr_text = api.GetUTF8Text()
 
@@ -48,22 +50,22 @@ def wer_test(original_files, ocr_files):
     wer_error_results = list()
     for orig in original_files:
         orig_file = open(orig[1], 'r')
-        orig_txt = orig_file.read()
+        orig_txt = orig_file.read().replace('\n', '')
         orig_file.close()
 
-        for ocr in ocr_files:
-            if ocr[0] is orig[0]:
-                ocr_file = open(ocr[1], 'r')
-                ocr_txt = ocr_file.read()
+        for ocr_t in ocr_files:
+            if ocr_t[0] == orig[0]:
+                ocr_file = open(ocr_t[1], 'r')
+                ocr_txt = ocr_file.read().replace('\n', '')
                 ocr_file.close()
 
                 error = wer(orig_txt, ocr_txt)
-                wer_error_results.append((orig[1], error))
+                wer_error_results.append((orig[0], error*100))
 
     return wer_error_results
 
 if __name__ == '__main__':
-    output_folder = 'ocr_texts'
+    output_folder = 'ocr_texts_' + lang
     if not os.path.exists(output_folder):
         print("Creating output folder: ", output_folder)
         os.mkdir(output_folder)
