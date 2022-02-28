@@ -3,8 +3,9 @@ import os
 from tesserocr import PyTessBaseAPI
 from jiwer import wer
 import xlsxwriter
+import pereprocess
 
-lang = 'arm'
+lang = 'hye'
 
 def write_sheet(result):
     workbook = xlsxwriter.Workbook('wer_' + lang + '.xlsx')
@@ -50,17 +51,19 @@ def wer_test(original_files, ocr_files):
     wer_error_results = list()
     for orig in original_files:
         orig_file = open(orig[1], 'r')
-        orig_txt = orig_file.read().replace('\n', '')
+        ortxt = orig_file.read()
+        orig_txt = pereprocess.preprocess_text(ortxt)
         orig_file.close()
 
         for ocr_t in ocr_files:
             if ocr_t[0] == orig[0]:
                 ocr_file = open(ocr_t[1], 'r')
-                ocr_txt = ocr_file.read().replace('\n', '')
+                octxt = ocr_file.read()
+                ocr_txt = pereprocess.preprocess_text(octxt)
                 ocr_file.close()
 
                 error = wer(orig_txt, ocr_txt)
-                wer_error_results.append((orig[0], error*100))
+                wer_error_results.append((orig[0], round(error*100, 3)))
 
     return wer_error_results
 
